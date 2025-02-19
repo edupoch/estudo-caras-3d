@@ -3,6 +3,7 @@ import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
+// Modelo de cara
 import modeloGLB from "../../modelos/First_Face_Scan.glb";
 
 let camera, scene, renderer;
