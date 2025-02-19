@@ -2,6 +2,9 @@ import * as THREE from "three";
 
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+
+import modeloGLB from "../../modelos/First_Face_Scan.glb";
+
 let camera, scene, renderer;
 
 init();
@@ -20,8 +23,8 @@ function init() {
   scene = new THREE.Scene();
   scene.background = new THREE.Color(0xffffff);
 
-  const loader = new GLTFLoader().setPath("../../modelos/");
-  loader.load("First_Face_Scan.glb", function (gltf) {
+  const loader = new GLTFLoader();
+  loader.load(modeloGLB, function (gltf) {
     const modelo = gltf.scene;
     modelo.scale.set(5, 5, 5);
     modelo.rotation.y = Math.PI / 2.5;

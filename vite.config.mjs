@@ -8,7 +8,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 // https://vitejs.dev/config/
 export default defineConfig({
   base: "/estudo-caras-3d",
-  assetsInclude: ["modelos/*.tif"],
+  assetsInclude: ["modelos/*.glb"],
   plugins: [tailwindcss()],
   build: {
     rollupOptions: {
