@@ -48,8 +48,10 @@ function init() {
     scene.add(modelo);
 
     const mesh = modelo.children[0];
+    const meshGeometry = mesh.geometry;
 
-    const wireframe = new THREE.WireframeGeometry(mesh.geometry);
+    // Wireframe
+    const wireframe = new THREE.WireframeGeometry(meshGeometry);
     const lineMaterial = new THREE.LineBasicMaterial({
       color: 0x000000,
       linewidth: 1,
@@ -60,7 +62,7 @@ function init() {
     line.position.x = 2;
     scene.add(line);
 
-    let meshGeometry = mesh.geometry.clone();
+    // Puntos
     const positions = meshGeometry.attributes.position.array;
 
     const geometry = new THREE.BufferGeometry();
@@ -75,7 +77,6 @@ function init() {
     pointCloud.scale.set(5, 5, 5);
     pointCloud.rotation.y = Math.PI / 2.5;
     pointCloud.position.x = -2.2;
-
     scene.add(pointCloud);
   });
 
@@ -85,8 +86,10 @@ function init() {
   renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setPixelRatio(window.devicePixelRatio);
   renderer.setSize(window.innerWidth, window.innerHeight);
+  // Melloramos o tono da foto
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1;
+
   renderer.setAnimationLoop(animate);
   container.appendChild(renderer.domElement);
 
