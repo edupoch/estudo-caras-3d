@@ -1,12 +1,11 @@
 import * as THREE from "three";
 
-import { uniform, skinning } from "three/tsl";
-
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
-import * as BufferGeometryUtils from "three/addons/utils/BufferGeometryUtils.js";
-import { VertexTangentsHelper } from "three/addons/helpers/VertexTangentsHelper.js";
 import { GUI } from "dat.gui";
+
+import { WireframeShader } from "./WireframeShader";
+import { CustomShader } from "./CustomShader";
 
 // Modelo de cara
 import modeloGLB from "../../modelos/First_Face_Scan.glb";
@@ -15,7 +14,28 @@ let camera, scene, renderer;
 let modelo;
 let conWireframe = false;
 
+const ESCALA = 5;
+const ROTACION = Math.PI / 2.5;
+const SALTO_POS = 2.2;
+
 init();
+
+function setupAttributes(geometry) {
+  const vectors = [
+    new THREE.Vector3(1, 0, 0),
+    new THREE.Vector3(0, 1, 0),
+    new THREE.Vector3(0, 0, 1),
+  ];
+
+  const position = geometry.attributes.position;
+  const centers = new Float32Array(position.count * 3);
+
+  for (let i = 0, l = position.count; i < l; i++) {
+    vectors[i % 3].toArray(centers, i * 3);
+  }
+
+  geometry.setAttribute("center", new THREE.BufferAttribute(centers, 3));
+}
 
 function init() {
   const container = document.getElementById("container");
@@ -43,7 +63,7 @@ function init() {
     });
 
     modelo.scale.set(5, 5, 5);
-    modelo.rotation.y = Math.PI / 2.5;
+    modelo.rotation.y = ROTACION;
     modelo.position.x = 0;
     scene.add(modelo);
 
@@ -57,9 +77,10 @@ function init() {
       linewidth: 1,
     });
     let line = new THREE.LineSegments(wireframe, lineMaterial);
-    line.scale.set(5, 5, 5);
-    line.rotation.y = Math.PI / 2.5;
-    line.position.x = 2;
+    line.scale.set(ESCALA, ESCALA, ESCALA);
+    line.rotation.y = ROTACION;
+    line.position.x = SALTO_POS;
+    line.position.y = 0;
     scene.add(line);
 
     // Puntos
@@ -70,14 +91,64 @@ function init() {
       "position",
       new THREE.Float32BufferAttribute(positions, 3)
     );
-    const material = new THREE.PointsMaterial({ size: 0.01, color: 0x000000 });
+    const material = new THREE.PointsMaterial({
+      size: 0.01,
+      color: 0x000000,
+    });
 
     const pointCloud = new THREE.Points(geometry, material);
 
-    pointCloud.scale.set(5, 5, 5);
-    pointCloud.rotation.y = Math.PI / 2.5;
-    pointCloud.position.x = -2.2;
+    pointCloud.scale.set(ESCALA, ESCALA, ESCALA);
+    pointCloud.rotation.y = ROTACION;
+    pointCloud.position.x = -SALTO_POS;
     scene.add(pointCloud);
+
+    // WireframeShader
+    const wireframeGeometry = meshGeometry.clone();
+    wireframeGeometry.deleteAttribute("normal");
+    wireframeGeometry.deleteAttribute("uv");
+    setupAttributes(wireframeGeometry);
+
+    const wireframeShader = WireframeShader;
+
+    const wireframeMaterial = new THREE.ShaderMaterial({
+      uniforms: { thickness: { value: 1 } },
+      vertexShader: wireframeShader.vertexShader,
+      fragmentShader: wireframeShader.fragmentShader,
+      side: THREE.DoubleSide,
+      alphaToCoverage: true, // only works when WebGLRenderer's "antialias" is set to "true"
+    });
+
+    const wireframeMesh = new THREE.Mesh(wireframeGeometry, wireframeMaterial);
+    wireframeMesh.scale.set(ESCALA, ESCALA, ESCALA);
+    wireframeMesh.rotation.y = ROTACION;
+    wireframeMesh.position.y = SALTO_POS;
+
+    scene.add(wireframeMesh);
+
+    // customShader
+    const customGeometry = meshGeometry.clone();
+    customGeometry.deleteAttribute("normal");
+    customGeometry.deleteAttribute("uv");
+    setupAttributes(customGeometry);
+
+    const customShader = CustomShader;
+
+    const customMaterial = new THREE.ShaderMaterial({
+      uniforms: { thickness: { value: 1 } },
+      vertexShader: customShader.vertexShader,
+      fragmentShader: customShader.fragmentShader,
+      side: THREE.DoubleSide,
+      alphaToCoverage: true, // only works when WebGLRenderer's "antialias" is set to "true"
+    });
+
+    const customMesh = new THREE.Mesh(customGeometry, customMaterial);
+    customMesh.scale.set(ESCALA, ESCALA, ESCALA);
+    customMesh.rotation.y = ROTACION;
+    customMesh.position.y = SALTO_POS;
+    customMesh.position.x = SALTO_POS;
+
+    scene.add(customMesh);
   });
 
   let ambientLight = new THREE.AmbientLight(0x323232, 100);
@@ -121,8 +192,6 @@ function onWindowResize() {
   camera.updateProjectionMatrix();
 
   renderer.setSize(window.innerWidth, window.innerHeight);
-
-  render();
 }
 
 function render() {
