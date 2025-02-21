@@ -16,7 +16,6 @@ export default defineConfig({
         main: resolve(__dirname, "index.html"),
         materiais: resolve(__dirname, "estudos/materiais/index.html"),
         efectos: resolve(__dirname, "estudos/efectos/index.html"),
-        luces: resolve(__dirname, "estudos/luces/index.html"),
       },
     },
   },

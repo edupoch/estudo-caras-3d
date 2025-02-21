@@ -11,7 +11,7 @@ import { CustomShader } from "./CustomShader";
 // Modelo de cara
 import modeloGLB from "../../modelos/First_Face_Scan.glb";
 
-let camera, scene, renderer;
+let camera, escenaMateriales, escenaModeloAislado, renderer;
 let modelo;
 let conWireframe = false;
 
@@ -52,17 +52,18 @@ function init() {
   );
   camera.position.set(0, 0, 3.5);
 
-  scene = new THREE.Scene();
-  scene.background = new THREE.Color(0xffffff);
-  // scene.background = new THREE.Color(0x000000);
+  // Definimos 2 escenas para que la luz de los materiales no afecte al modelo
+
+  escenaMateriales = new THREE.Scene();
+  escenaMateriales.background = new THREE.Color(0xffffff);
+  escenaModeloAislado = new THREE.Scene();
 
   ambientLight = new THREE.AmbientLight(0x323232, 100);
-  scene.add(ambientLight);
+  escenaMateriales.add(ambientLight);
+  escenaModeloAislado.add(ambientLight);
 
-  pointLight = new THREE.PointLight(0xffffff, 100);
-  pointLight.position.set(-SALTO_POS, SALTO_POS, 2);
-  // pointLight.castShadow = true;
-
+  pointLight = new THREE.PointLight(0xffffff, 50);
+  pointLight.position.set(0, SALTO_POS, 3);
   const bulbMat = new THREE.MeshStandardMaterial({
     emissive: 0xffffee,
     emissiveIntensity: 1,
@@ -71,7 +72,10 @@ function init() {
   // Debug de posición de la luz
   const bulbGeometry = new THREE.SphereGeometry(0.2, 16, 8);
   pointLight.add(new THREE.Mesh(bulbGeometry, bulbMat));
-  scene.add(pointLight);
+  escenaMateriales.add(pointLight);
+
+  const pointLightModelo = new THREE.PointLight(0xffffff, 10);
+  pointLightModelo.position.set(0, 0, 5);
 
   const loader = new GLTFLoader();
   loader.load(modeloGLB, function (gltf) {
@@ -86,7 +90,7 @@ function init() {
     modelo.rotation.y = ROTACION;
     modelo.position.x = 0;
 
-    scene.add(modelo);
+    escenaModeloAislado.add(modelo);
 
     const mesh = modelo.children[0];
     const meshGeometry = mesh.geometry;
@@ -102,7 +106,7 @@ function init() {
     line.rotation.y = ROTACION;
     line.position.x = SALTO_POS;
     line.position.y = 0;
-    scene.add(line);
+    escenaMateriales.add(line);
 
     // Puntos
     const positions = meshGeometry.attributes.position.array;
@@ -122,7 +126,7 @@ function init() {
     pointCloud.scale.set(ESCALA, ESCALA, ESCALA);
     pointCloud.rotation.y = ROTACION;
     pointCloud.position.x = -SALTO_POS;
-    scene.add(pointCloud);
+    escenaMateriales.add(pointCloud);
 
     // WireframeShader
     const wireframeGeometry = meshGeometry.clone();
@@ -143,9 +147,9 @@ function init() {
     const wireframeMesh = new THREE.Mesh(wireframeGeometry, wireframeMaterial);
     wireframeMesh.scale.set(ESCALA, ESCALA, ESCALA);
     wireframeMesh.rotation.y = ROTACION;
-    wireframeMesh.position.y = SALTO_POS;
+    wireframeMesh.position.y = -SALTO_POS;
 
-    scene.add(wireframeMesh);
+    escenaMateriales.add(wireframeMesh);
 
     // customShader
     const customGeometry = meshGeometry.clone();
@@ -169,45 +173,62 @@ function init() {
     customMesh.position.y = SALTO_POS;
     customMesh.position.x = SALTO_POS;
 
-    scene.add(customMesh);
+    escenaMateriales.add(customMesh);
 
-    // ToonShaderDotted
-    const toonShaderDotted = ToonShaderDotted;
-
-    const toonMaterial = new THREE.ShaderMaterial({
-      uniforms: toonShaderDotted.uniforms,
-      vertexShader: toonShaderDotted.vertexShader,
-      fragmentShader: toonShaderDotted.fragmentShader,
-    });
-    // toonMaterial.uniforms["uDirLightPos"].value = pointLight.position;
-    const basicMaterial = new THREE.MeshStandardMaterial({
+    // MeshStandardMaterial  - Material sin brillo
+    const meshStandardGeometry = meshGeometry.clone();
+    // Calcula las normales de los vertex, para simplificar las formas
+    meshStandardGeometry.computeVertexNormals();
+    const meshStandardMaterial = new THREE.MeshStandardMaterial({
       roughness: 0.7,
-      color: 0xffffff,
+      color: 0x2f2f2f,
       bumpScale: 1,
       metalness: 0.2,
     });
-    basicMaterial.flatShading = true;
+    // Definimos un sombreado plano
+    // meshStandardMaterial.flatShading = true;
 
-    const toonMesh = new THREE.Mesh(meshGeometry, basicMaterial);
-    toonMesh.scale.set(ESCALA, ESCALA, ESCALA);
-    toonMesh.rotation.y = ROTACION;
-    toonMesh.position.y = SALTO_POS;
-    toonMesh.position.x = -SALTO_POS;
+    const standardMesh = new THREE.Mesh(
+      meshStandardGeometry,
+      meshStandardMaterial
+    );
+    standardMesh.scale.set(ESCALA, ESCALA, ESCALA);
+    standardMesh.rotation.y = ROTACION;
+    standardMesh.position.y = SALTO_POS;
+    standardMesh.position.x = -SALTO_POS;
 
-    toonMesh.receiveShadow = true;
-    toonMesh.castShadow = true;
+    escenaMateriales.add(standardMesh);
 
-    scene.add(toonMesh);
+    // MeshPhongMaterial - Material con brillo
+    const meshPhongMaterial = new THREE.MeshPhongMaterial({ color: 0x2f2f2f });
+
+    const meshPhongGeometry = meshGeometry.clone();
+    // Calcula las normales de los vertex, para simplificar las formas
+    meshPhongGeometry.computeVertexNormals();
+
+    const meshPhong = new THREE.Mesh(meshPhongGeometry, meshPhongMaterial);
+    meshPhong.scale.set(ESCALA, ESCALA, ESCALA);
+    meshPhong.rotation.y = ROTACION;
+    meshPhong.position.y = SALTO_POS;
+    meshPhong.position.x = 0;
+
+    escenaMateriales.add(meshPhong);
   });
 
-  renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer = new THREE.WebGLRenderer({
+    antialias: true,
+    // alpha: true,
+  });
+  // Definimos que o fondo negro da escena do modelo se convirta en transparente
+  renderer.setClearColor(0x000000, 0);
   renderer.setPixelRatio(window.devicePixelRatio);
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.shadowMap.enabled = true;
   // Melloramos o tono da foto
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  // renderer.toneMappingExposure = 1;
-  renderer.toneMappingExposure = Math.pow(0.68, 5.0);
+  renderer.toneMappingExposure = 1;
+  // Importante para pintar as 2 esceas
+  renderer.autoClear = false;
 
   renderer.setAnimationLoop(animate);
   container.appendChild(renderer.domElement);
@@ -243,7 +264,10 @@ function onWindowResize() {
 }
 
 function render() {
-  renderer.render(scene, camera);
+  // Importante para pintar las 2 escenas?
+  // renderer.clear();
+  renderer.render(escenaMateriales, camera);
+  renderer.render(escenaModeloAislado, camera);
 }
 
 function animate() {
