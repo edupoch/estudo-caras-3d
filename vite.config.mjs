@@ -14,8 +14,9 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: resolve(__dirname, "index.html"),
-        proba: resolve(__dirname, "estudos/proba/index.html"),
-        semitonos: resolve(__dirname, "estudos/semitonos/index.html"),
+        materiais: resolve(__dirname, "estudos/materiais/index.html"),
+        efectos: resolve(__dirname, "estudos/efectos/index.html"),
+        luces: resolve(__dirname, "estudos/luces/index.html"),
       },
     },
   },

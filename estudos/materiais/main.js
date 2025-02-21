@@ -3,6 +3,7 @@ import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { GUI } from "dat.gui";
+import { ToonShaderDotted } from "three/examples/jsm/Addons.js";
 
 import { WireframeShader } from "./WireframeShader";
 import { CustomShader } from "./CustomShader";
@@ -13,6 +14,8 @@ import modeloGLB from "../../modelos/First_Face_Scan.glb";
 let camera, scene, renderer;
 let modelo;
 let conWireframe = false;
+
+let ambientLight, pointLight;
 
 const ESCALA = 5;
 const ROTACION = Math.PI / 2.5;
@@ -53,6 +56,23 @@ function init() {
   scene.background = new THREE.Color(0xffffff);
   // scene.background = new THREE.Color(0x000000);
 
+  ambientLight = new THREE.AmbientLight(0x323232, 100);
+  scene.add(ambientLight);
+
+  pointLight = new THREE.PointLight(0xffffff, 100);
+  pointLight.position.set(-SALTO_POS, SALTO_POS, 2);
+  // pointLight.castShadow = true;
+
+  const bulbMat = new THREE.MeshStandardMaterial({
+    emissive: 0xffffee,
+    emissiveIntensity: 1,
+    color: 0xff0000,
+  });
+  // Debug de posición de la luz
+  const bulbGeometry = new THREE.SphereGeometry(0.2, 16, 8);
+  pointLight.add(new THREE.Mesh(bulbGeometry, bulbMat));
+  scene.add(pointLight);
+
   const loader = new GLTFLoader();
   loader.load(modeloGLB, function (gltf) {
     modelo = gltf.scene;
@@ -65,6 +85,7 @@ function init() {
     modelo.scale.set(5, 5, 5);
     modelo.rotation.y = ROTACION;
     modelo.position.x = 0;
+
     scene.add(modelo);
 
     const mesh = modelo.children[0];
@@ -149,17 +170,44 @@ function init() {
     customMesh.position.x = SALTO_POS;
 
     scene.add(customMesh);
-  });
 
-  let ambientLight = new THREE.AmbientLight(0x323232, 100);
-  scene.add(ambientLight);
+    // ToonShaderDotted
+    const toonShaderDotted = ToonShaderDotted;
+
+    const toonMaterial = new THREE.ShaderMaterial({
+      uniforms: toonShaderDotted.uniforms,
+      vertexShader: toonShaderDotted.vertexShader,
+      fragmentShader: toonShaderDotted.fragmentShader,
+    });
+    // toonMaterial.uniforms["uDirLightPos"].value = pointLight.position;
+    const basicMaterial = new THREE.MeshStandardMaterial({
+      roughness: 0.7,
+      color: 0xffffff,
+      bumpScale: 1,
+      metalness: 0.2,
+    });
+    basicMaterial.flatShading = true;
+
+    const toonMesh = new THREE.Mesh(meshGeometry, basicMaterial);
+    toonMesh.scale.set(ESCALA, ESCALA, ESCALA);
+    toonMesh.rotation.y = ROTACION;
+    toonMesh.position.y = SALTO_POS;
+    toonMesh.position.x = -SALTO_POS;
+
+    toonMesh.receiveShadow = true;
+    toonMesh.castShadow = true;
+
+    scene.add(toonMesh);
+  });
 
   renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setPixelRatio(window.devicePixelRatio);
   renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.shadowMap.enabled = true;
   // Melloramos o tono da foto
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1;
+  // renderer.toneMappingExposure = 1;
+  renderer.toneMappingExposure = Math.pow(0.68, 5.0);
 
   renderer.setAnimationLoop(animate);
   container.appendChild(renderer.domElement);
