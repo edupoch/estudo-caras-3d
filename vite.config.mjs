@@ -15,6 +15,7 @@ export default defineConfig({
       input: {
         main: resolve(__dirname, "index.html"),
         proba: resolve(__dirname, "estudos/proba/index.html"),
+        semitonos: resolve(__dirname, "estudos/semitonos/index.html"),
       },
     },
   },
