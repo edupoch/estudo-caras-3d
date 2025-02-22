@@ -50,7 +50,6 @@ function init() {
     0.25,
     20
   );
-  camera.position.set(0, 0, 3.5);
 
   // Definimos 2 escenas para que la luz de los materiales no afecte al modelo
 
@@ -213,6 +212,37 @@ function init() {
     meshPhong.position.x = 0;
 
     escenaMateriales.add(meshPhong);
+
+    // ToonMeshMaterial -
+    const toonShaderDotted = ToonShaderDotted;
+    const toonShaderUniforms = THREE.UniformsUtils.clone(
+      toonShaderDotted.uniforms
+    );
+
+    toonShaderUniforms.uDirLightPos.value = pointLight.position;
+    toonShaderUniforms.uDirLightPos.value = new THREE.Vector3(
+      -SALTO_POS - 3,
+      -SALTO_POS,
+      1
+    );
+
+    const toonMeshMaterial = new THREE.ShaderMaterial({
+      uniforms: toonShaderUniforms,
+      vertexShader: toonShaderDotted.vertexShader,
+      fragmentShader: toonShaderDotted.fragmentShader,
+    });
+
+    const toonMeshGeometry = meshGeometry.clone();
+    // Calcula las normales de las caras para que se pueda iluminar correctamente
+    toonMeshGeometry.computeVertexNormals();
+
+    const toonMesh = new THREE.Mesh(toonMeshGeometry, toonMeshMaterial);
+    toonMesh.scale.set(ESCALA, ESCALA, ESCALA);
+    toonMesh.rotation.y = ROTACION;
+    toonMesh.position.y = -SALTO_POS;
+    toonMesh.position.x = -SALTO_POS;
+
+    escenaMateriales.add(toonMesh);
   });
 
   renderer = new THREE.WebGLRenderer({
@@ -237,7 +267,10 @@ function init() {
   controls.addEventListener("change", render); // use if there is no animation loop
   controls.minDistance = 1;
   controls.maxDistance = 10;
-  controls.target.set(0, 0, -0.2);
+  // camera.position.set(0, 0, 3.5);
+  // controls.target.set(0, 0, -0.2);
+  camera.position.set(-SALTO_POS, -SALTO_POS, 3.5);
+  controls.target.set(-SALTO_POS, -SALTO_POS, 0);
   controls.update();
 
   let gui = new GUI();
