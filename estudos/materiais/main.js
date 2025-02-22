@@ -177,7 +177,7 @@ function init() {
 
     // MeshStandardMaterial  - Material sin brillo
     const meshStandardGeometry = meshGeometry.clone();
-    // Calcula las normales de los vertex, para simplificar las formas
+    // Calcula las normales de las caras para que se pueda iluminar correctamente
     meshStandardGeometry.computeVertexNormals();
     const meshStandardMaterial = new THREE.MeshStandardMaterial({
       roughness: 0.7,
@@ -203,7 +203,7 @@ function init() {
     const meshPhongMaterial = new THREE.MeshPhongMaterial({ color: 0x2f2f2f });
 
     const meshPhongGeometry = meshGeometry.clone();
-    // Calcula las normales de los vertex, para simplificar las formas
+    // Calcula las normales de las caras para que se pueda iluminar correctamente
     meshPhongGeometry.computeVertexNormals();
 
     const meshPhong = new THREE.Mesh(meshPhongGeometry, meshPhongMaterial);
